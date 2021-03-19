@@ -1,0 +1,32 @@
+{
+    "name": "ReDnAxE/api-skeleton",
+    "type": "project",
+    "license": "MIT",
+    "description": "A minimal APi project recommended to create bare bones api",
+    "minimum-stability": "dev",
+    "require": {
+        "php": ">=7.2.5",
+        "ext-ctype": "*",
+        "ext-iconv": "*"
+    },
+    "require-dev": {
+        "behat/behat": "3.8.x-dev"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": {
+            "*": "dist"
+        },
+        "sort-packages": true
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "App\\Tests\\": "tests/"
+        }
+    }
+}
