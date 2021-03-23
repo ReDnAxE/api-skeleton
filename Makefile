@@ -5,8 +5,8 @@
 ## Setup ————————————————————————————————————————————————————————————————————————
 DOCKER_COMPOSE_DEV     = docker-compose -f docker/docker-compose.dev.yml
 DOCKER_COMPOSE_TEST     = docker-compose -p docker_test -f docker/docker-compose.test.yml
-EXEC_BACK          = $(DOCKER_COMPOSE_DEV) exec -w /var/www/back web
-EXEC_COMPOSER      = docker run --rm -it -u $$(id -u):$$(id -g) -v $$PWD/:/back -v ~/.composer:/root/.composer -w /back composer:latest composer
+EXEC_API          = $(DOCKER_COMPOSE_DEV) exec -w /srv/api php
+EXEC_COMPOSER      = docker run --rm -it -u $$(id -u):$$(id -g) -v $$PWD/api:/srv/api -v ~/.composer:/root/.composer -w /srv/api composer:latest composer
 .DEFAULT_GOAL      = help
 #.PHONY
 
@@ -57,22 +57,22 @@ git-clean-remote: ## Clean all remote branches merge on master except master/dev
 	-git fetch -p && git branch -r --merged origin/master | grep origin | egrep -v '>|master|develop|recette|recette-bis|release|((^feature|^hotfix|^fix|^task)/(.+))' | cut -d/ -f2- | xargs git push origin --delete
 
 ##
-## Back
+## Api
 ## ————————————————————————————————————————————————————————————————————————
 ##
-back-clear-cache: ## Clear the cache
-	$(EXEC_BACK) bin/console c:c
+api-clear-cache: ## Clear the cache
+	$(EXEC_API) bin/console c:c
 
-back-fix-perm: ## Fix permissions on var/*
-	$(EXEC_BACK) chmod -R 777 var/*
+api-fix-perm: ## Fix permissions on var/*
+	$(EXEC_API) chmod -R 777 var/*
 
-back-purge: ## Purge cache
-	$(EXEC_BACK) rm -rf var/cache
+api-purge: ## Purge cache
+	$(EXEC_API) rm -rf var/cache
 
-back-clean-all: ## Clear all caches, Doctrine and redis then fix permission
-	$(EXEC_BACK) bin/deploy.sh
+api-clean-all: ## Clear all caches, Doctrine and redis then fix permission
+	$(EXEC_API) bin/deploy.sh
 
-back-composer:
+api-composer:
 	$(EXEC_COMPOSER) $(COMMAND_ARGS)
 
 ##
@@ -88,20 +88,20 @@ test-docker-down: ##Init tests docker containers
 test-db-init: test-docker-up ##Init db
 	$(DOCKER_COMPOSE_TEST) exec -w /var/www/back web bin/init.sh
 
-test-back: test-docker-up debug-php-test-off test-back-unit test-back-int  ## Run tests (use "make -i" to ignore errors and continue)
+test-api: test-docker-up debug-php-test-off test-back-unit test-back-int  ## Run tests (use "make -i" to ignore errors and continue)
 
-test-back-unit: test-docker-up debug-php-test-off ## Run unit tests
+test-api-unit: test-docker-up debug-php-test-off ## Run unit tests
 	$(DOCKER_COMPOSE_TEST) exec -w /var/www/back web vendor/bin/phpunit -c . --testsuite unit
 
-test-back-int: test-docker-up debug-php-test-off test-db-init ## Run functional tests
+test-api-int: test-docker-up debug-php-test-off test-db-init ## Run functional tests
 	$(DOCKER_COMPOSE_TEST) exec -w /var/www/back web vendor/bin/phpunit -c . --testsuite int
 
-test-back-coverage: test-docker-up debug-php-test-on test-back-unit-coverage test-back-int-coverage ## Run tests with coverage (use "make -i" to ignore errors and continue)
+test-api-coverage: test-docker-up debug-php-test-on test-back-unit-coverage test-back-int-coverage ## Run tests with coverage (use "make -i" to ignore errors and continue)
 
-test-back-unit-coverage: test-docker-up debug-php-test-on ## Run back unit test with html coverage report
+test-api-unit-coverage: test-docker-up debug-php-test-on ## Run back unit test with html coverage report
 	$(DOCKER_COMPOSE_TEST) exec -w /var/www/back web vendor/bin/phpunit -c . --coverage-html tests/coverage/unit --testsuite unit
 
-test-back-int-coverage: test-docker-up test-db-init debug-php-test-on ## Run back integration test with html coverage report
+test-api-int-coverage: test-docker-up test-db-init debug-php-test-on ## Run back integration test with html coverage report
 	$(DOCKER_COMPOSE_TEST) exec -w /var/www/back web vendor/bin/phpunit -c . --coverage-html tests/coverage/int --testsuite int
 
 ##

@@ -1,0 +1,35 @@
+{
+    # Debug
+    {$DEBUG}
+    # HTTP/3 support
+    servers {
+        protocol {
+            experimental_http3
+        }
+    }
+}
+
+{$SERVER_NAME}
+
+log
+
+# Matches requests for HTML documents, for static files and for Next.js files,
+# except for known API paths and paths with extensions handled by the API
+@pwa expression `(
+        {header.Accept}.matches("\\btext/html\\b")
+        && !{path}.matches("(?i)(?:^/docs|^/graphql|^/bundles/|^/_profiler|^/_wdt|\\.(?:json|html$|csv$|ya?ml$|xml$))")
+    )
+    || {path} == "/favicon.ico"
+    || {path} == "/manifest.json"
+    || {path} == "/robots.txt"
+    || {path}.startsWith("/_next")
+    || {path}.startsWith("/sitemap")`
+
+route {
+    root * /srv/api/public
+    push
+
+    php_fastcgi unix//var/run/php/php-fpm.sock
+    encode zstd gzip
+    file_server
+}

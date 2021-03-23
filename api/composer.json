@@ -3,9 +3,19 @@
     "type": "project",
     "license": "MIT",
     "description": "A minimal APi project recommended to create bare bones api",
+    "authors": [
+        {
+            "name": "Alexandre GESLIN",
+            "homepage": "https://github.com/rednaxe/api-skeleton"
+        }
+    ],
+    "keywords": [
+        "php",
+        "behat"
+    ],
     "minimum-stability": "dev",
     "require": {
-        "php": ">=7.2.5",
+        "php": ">=8.0.0",
         "ext-ctype": "*",
         "ext-iconv": "*"
     },
@@ -17,7 +27,8 @@
         "preferred-install": {
             "*": "dist"
         },
-        "sort-packages": true
+        "sort-packages": true,
+        "bin-dir": "bin/"
     },
     "autoload": {
         "psr-4": {
