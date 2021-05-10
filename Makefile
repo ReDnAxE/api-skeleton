@@ -3,15 +3,15 @@
 
 
 ## Setup ————————————————————————————————————————————————————————————————————————
-DOCKER_COMPOSE_DEV     = docker-compose -f docker/docker-compose.dev.yml
-DOCKER_COMPOSE_TEST     = docker-compose -p docker_test -f docker/docker-compose.test.yml
-EXEC_API          = $(DOCKER_COMPOSE_DEV) exec -w /srv/api php
-EXEC_COMPOSER      = docker run --rm -it -u $$(id -u):$$(id -g) -v $$PWD/api:/srv/api -v ~/.composer:/root/.composer -w /srv/api composer:latest composer
-.DEFAULT_GOAL      = help
+DOCKER_COMPOSE_DEV     = docker-compose -f docker-compose.yml -f docker-compose.dev.yml
+DOCKER_COMPOSE_TEST    = docker-compose -p docker_test -f docker-compose.test.yml
+EXEC_API               = $(DOCKER_COMPOSE_DEV) exec php
+EXEC_COMPOSER          = $(EXEC_API) composer
+.DEFAULT_GOAL          = help
 #.PHONY
 
 ## Support args for commands ————————————————————————————————————————————————————————————————————————
-SUPPORTED_COMMANDS := back-composer
+SUPPORTED_COMMANDS := api-composer api-behat
 SUPPORTS_MAKE_ARGS := $(findstring $(firstword $(MAKECMDGOALS)), $(SUPPORTED_COMMANDS))
 ifneq "$(SUPPORTS_MAKE_ARGS)" ""
   COMMAND_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
@@ -39,6 +39,9 @@ docker-kill: ## Destroy the project
 	@$(DOCKER_COMPOSE_DEV) down --volumes --remove-orphans
 	docker-sync stop
 	docker-sync clean
+
+docker-php-sh: ## Exec container sh
+	$(EXEC_API) sh
 
 ##
 ## Git utils
@@ -72,37 +75,16 @@ api-purge: ## Purge cache
 api-clean-all: ## Clear all caches, Doctrine and redis then fix permission
 	$(EXEC_API) bin/deploy.sh
 
-api-composer:
-	$(EXEC_COMPOSER) $(COMMAND_ARGS)
+api-composer: ## Api composer command with args
+	$(EXEC_API) composer $(COMMAND_ARGS)
 
 ##
 ## Tests
 ## ————————————————————————————————————————————————————————————————————————
 ##
-test-docker-up: ##Init tests docker containers
-	$(DOCKER_COMPOSE_TEST) up -d --remove-orphans
 
-test-docker-down: ##Init tests docker containers
-	$(DOCKER_COMPOSE_TEST) down -v
-
-test-db-init: test-docker-up ##Init db
-	$(DOCKER_COMPOSE_TEST) exec -w /var/www/back web bin/init.sh
-
-test-api: test-docker-up debug-php-test-off test-back-unit test-back-int  ## Run tests (use "make -i" to ignore errors and continue)
-
-test-api-unit: test-docker-up debug-php-test-off ## Run unit tests
-	$(DOCKER_COMPOSE_TEST) exec -w /var/www/back web vendor/bin/phpunit -c . --testsuite unit
-
-test-api-int: test-docker-up debug-php-test-off test-db-init ## Run functional tests
-	$(DOCKER_COMPOSE_TEST) exec -w /var/www/back web vendor/bin/phpunit -c . --testsuite int
-
-test-api-coverage: test-docker-up debug-php-test-on test-back-unit-coverage test-back-int-coverage ## Run tests with coverage (use "make -i" to ignore errors and continue)
-
-test-api-unit-coverage: test-docker-up debug-php-test-on ## Run back unit test with html coverage report
-	$(DOCKER_COMPOSE_TEST) exec -w /var/www/back web vendor/bin/phpunit -c . --coverage-html tests/coverage/unit --testsuite unit
-
-test-api-int-coverage: test-docker-up test-db-init debug-php-test-on ## Run back integration test with html coverage report
-	$(DOCKER_COMPOSE_TEST) exec -w /var/www/back web vendor/bin/phpunit -c . --coverage-html tests/coverage/int --testsuite int
+api-behat: ## Api Behat test launcher
+	$(EXEC_API) bin/behat
 
 ##
 ## Debug
