@@ -26,21 +26,15 @@ help: ## Outputs help
 ## ————————————————————————————————————————————————————————————————————————
 ##
 docker-start: ## Start the project
-	docker-sync start
 	$(DOCKER_COMPOSE_DEV) up -d --remove-orphans --no-recreate
 
 docker-stop: ## Stop the project
 	$(DOCKER_COMPOSE_DEV) stop
-	docker-sync stop
-	docker-sync clean
 
-docker-kill: ## Destroy the project
-	@$(DOCKER_COMPOSE_DEV) kill
-	@$(DOCKER_COMPOSE_DEV) down --volumes --remove-orphans
-	docker-sync stop
-	docker-sync clean
+docker-down: ## Destroy the project
+	$(DOCKER_COMPOSE_DEV) down --volumes --remove-orphans
 
-docker-php-sh: ## Exec container sh
+docker-api-sh: ## Exec container sh
 	$(EXEC_API) sh
 
 ##
@@ -83,7 +77,7 @@ api-composer: ## Api composer command with args
 ## ————————————————————————————————————————————————————————————————————————
 ##
 
-api-behat: ## Api Behat test launcher
+test-behat: ## Api Behat test launcher
 	$(EXEC_API) bin/behat
 
 ##
